@@ -1,4 +1,3 @@
--- monologue.lua
 local module = {}
 
 function module.init(player, character, Config, VoiceLines)
