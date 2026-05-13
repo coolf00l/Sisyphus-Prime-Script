@@ -6,10 +6,15 @@ function module.init(player, character, Config, VoiceLines)
     local Workspace = game:GetService("Workspace")
 
     local root = character:WaitForChild("HumanoidRootPart")
+
+    -- EXACT 0.5s cooldown
     local cooldown = 0
+    local COOLDOWN_TIME = 0.5
+
     local damageMultiplier = 1
     local dashMultiplier = 1
 
+    -- Enemy detection
     local function getEnemiesInFront(range)
         local hits = {}
         for _, inst in ipairs(workspace:GetDescendants()) do
@@ -27,10 +32,11 @@ function module.init(player, character, Config, VoiceLines)
         return hits
     end
 
+    -- PRIME PUNCH DASH
     local function primePunchDash()
         local now = tick()
         if now < cooldown then return end
-        cooldown = now + 0.5
+        cooldown = now + COOLDOWN_TIME
 
         VoiceLines.onPunch()
 
@@ -65,19 +71,20 @@ function module.init(player, character, Config, VoiceLines)
             -- Move forward
             root.CFrame = root.CFrame + forward * distancePerFrame
 
-            -- Hitbox + walkfling-style knockback
+            -- Hitbox + walkfling-like knockback
             local enemies = getEnemiesInFront(8)
             for hum, hrp in pairs(enemies) do
                 hum:TakeDamage(Config.Punch.Damage * damageMultiplier)
 
                 if flingActive then
                     -- Safe walkfling-style velocity burst
-                    hrp.AssemblyLinearVelocity = forward * 200
+                    hrp.AssemblyLinearVelocity = forward * 250
                 end
             end
         end)
     end
 
+    -- KEYBIND: M1
     UserInputService.InputBegan:Connect(function(input, gp)
         if gp then return end
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -87,6 +94,7 @@ function module.init(player, character, Config, VoiceLines)
         end
     end)
 
+    -- Phase 2 scaling
     function module.setPhase2(mult)
         damageMultiplier = mult
         dashMultiplier = mult
