@@ -1,3 +1,4 @@
+-- shockwave.lua
 local module = {}
 
 function module.init(player, character, Config, VoiceLines)
@@ -7,6 +8,28 @@ function module.init(player, character, Config, VoiceLines)
     local shockwaveCooldown = 0
     local damageMultiplier = 1
     local radiusMultiplier = 1
+
+    local function getEnemiesInRadius(radius)
+        local root = humanoidRootPart
+        if not root then return {} end
+
+        local hitHumanoids = {}
+
+        for _, inst in ipairs(workspace:GetDescendants()) do
+            if inst:IsA("Model") and inst ~= character then
+                local hum = inst:FindFirstChildOfClass("Humanoid")
+                local hrp = inst:FindFirstChild("HumanoidRootPart")
+                if hum and hrp and hum.Health > 0 then
+                    local dist = (hrp.Position - root.Position).Magnitude
+                    if dist <= radius then
+                        hitHumanoids[hum] = hrp
+                    end
+                end
+            end
+        end
+
+        return hitHumanoids
+    end
 
     local function shockwave()
         local now = tick()
@@ -18,16 +41,12 @@ function module.init(player, character, Config, VoiceLines)
         local radius = Config.Shockwave.Radius * radiusMultiplier
         local damage = Config.Shockwave.Damage * damageMultiplier
 
-        for _, model in ipairs(workspace:GetChildren()) do
-            local hum = model:FindFirstChildOfClass("Humanoid")
-            local hrp = model:FindFirstChild("HumanoidRootPart")
-            if hum and hrp and model ~= character then
-                local dist = (hrp.Position - humanoidRootPart.Position).Magnitude
-                if dist <= radius then
-                    hum:TakeDamage(damage)
-                    hrp.Velocity = (hrp.Position - humanoidRootPart.Position).Unit * 60
-                end
-            end
+        local enemies = getEnemiesInRadius(radius)
+
+        for hum, hrp in pairs(enemies) do
+            hum:TakeDamage(damage)
+            local dir = (hrp.Position - humanoidRootPart.Position).Unit
+            hrp.Velocity = dir * 60
         end
     end
 
