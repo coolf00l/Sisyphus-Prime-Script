@@ -1,4 +1,3 @@
--- dash.lua
 local module = {}
 
 function module.init(player, character, Config, VoiceLines)
@@ -14,7 +13,6 @@ function module.init(player, character, Config, VoiceLines)
     end
 
     local function dash()
-        if not canDash then return end
         local now = tick()
         if now < dashCooldown then return end
         dashCooldown = now + Config.Dash.Cooldown
@@ -52,8 +50,6 @@ function module.init(player, character, Config, VoiceLines)
     end)
 
     module.setPhase2 = setPhase2
-    module.enable = function() canDash = true end
-    module.disable = function() canDash = false end
 end
 
 return module
