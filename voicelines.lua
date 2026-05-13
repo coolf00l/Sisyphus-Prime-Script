@@ -1,4 +1,3 @@
--- voicelines.lua
 local module = {}
 
 local monologueFinished = false
@@ -38,7 +37,12 @@ function module.canUsePostMonologueAbilities()
 end
 
 function module.onDash()
-    -- optional: add dash voice lines
+end
+
+function module.onPunch()
+end
+
+function module.onShockwave()
 end
 
 function module.onPhase2()
