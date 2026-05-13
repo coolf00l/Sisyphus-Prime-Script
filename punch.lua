@@ -3,21 +3,24 @@ local module = {}
 function module.init(player, character, Config, VoiceLines)
     local RunService = game:GetService("RunService")
     local UserInputService = game:GetService("UserInputService")
+    local Workspace = game:GetService("Workspace")
 
     local root = character:WaitForChild("HumanoidRootPart")
     local cooldown = 0
     local damageMultiplier = 1
     local dashMultiplier = 1
 
-    local function getEnemiesInFront(range, radius)
+    local function getEnemiesInFront(range)
         local hits = {}
-        for _, model in ipairs(workspace:GetChildren()) do
-            local hum = model:FindFirstChildOfClass("Humanoid")
-            local hrp = model:FindFirstChild("HumanoidRootPart")
-            if hum and hrp and model ~= character then
-                local dist = (hrp.Position - root.Position).Magnitude
-                if dist <= range then
-                    table.insert(hits, hum)
+        for _, inst in ipairs(workspace:GetDescendants()) do
+            if inst:IsA("Model") and inst ~= character then
+                local hum = inst:FindFirstChildOfClass("Humanoid")
+                local hrp = inst:FindFirstChild("HumanoidRootPart")
+                if hum and hrp and hum.Health > 0 then
+                    local dist = (hrp.Position - root.Position).Magnitude
+                    if dist <= range then
+                        hits[hum] = hrp
+                    end
                 end
             end
         end
@@ -35,24 +38,41 @@ function module.init(player, character, Config, VoiceLines)
         local totalDistance = Config.Dash.Distance * dashMultiplier
         local startTime = tick()
 
+        local flingActive = true
+
         local connection
         connection = RunService.Heartbeat:Connect(function(dt)
             local elapsed = tick() - startTime
             if elapsed >= dashTime then
+                flingActive = false
                 connection:Disconnect()
                 return
             end
 
             local forward = root.CFrame.LookVector
             local distancePerFrame = (totalDistance / dashTime) * dt
+
+            -- Collision raycast
+            local ray = Ray.new(root.Position, forward * distancePerFrame)
+            local hit, pos = Workspace:FindPartOnRay(ray, character)
+
+            if hit then
+                flingActive = false
+                connection:Disconnect()
+                return
+            end
+
+            -- Move forward
             root.CFrame = root.CFrame + forward * distancePerFrame
 
-            local enemies = getEnemiesInFront(8, 6)
-            for _, hum in ipairs(enemies) do
+            -- Hitbox + walkfling-style knockback
+            local enemies = getEnemiesInFront(8)
+            for hum, hrp in pairs(enemies) do
                 hum:TakeDamage(Config.Punch.Damage * damageMultiplier)
-                local hrp = hum.Parent:FindFirstChild("HumanoidRootPart")
-                if hrp then
-                    hrp.Velocity = forward * Config.Punch.Knockback
+
+                if flingActive then
+                    -- Safe walkfling-style velocity burst
+                    hrp.AssemblyLinearVelocity = forward * 200
                 end
             end
         end)
