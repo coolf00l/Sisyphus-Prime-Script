@@ -1,4 +1,3 @@
--- phase2.lua
 local module = {}
 
 function module.init(player, character, Config, VoiceLines, Dash, Punch, Shockwave)
