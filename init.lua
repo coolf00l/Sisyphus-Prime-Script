@@ -1,4 +1,3 @@
--- init.lua (GitHub)
 local base = "https://raw.githubusercontent.com/coolf00l/Sisyphus-Prime-Script/main/"
 
 local function loadModule(path)
